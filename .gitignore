@@ -1,0 +1,28 @@
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Datos de entrada (confidenciales: adjuntos del correo)
+data/*
+!data/.gitkeep
+
+# Salidas generadas
+salidas/*
+!salidas/.gitkeep
+
+# Archivos de mercado / cartera sueltos (por si quedan en la raíz)
+*.xlsx
+*.xlsm
+*.csv
+
+# Sistema
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
