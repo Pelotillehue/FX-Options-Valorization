@@ -21,6 +21,9 @@ salidas/*
 *.xlsm
 *.csv
 
+# Excepción: datos de mercado de prueba (no sensibles) sí se versionan
+!tests/data/*.xlsx
+
 # Sistema
 .DS_Store
 Thumbs.db
