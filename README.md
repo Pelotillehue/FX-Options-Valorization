@@ -14,7 +14,12 @@ fx-options-valorizacion/
 ├── load_market.py            # Lee 'Grid Vol Bloomberg Creasys.xlsx' (reemplaza el notebook)
 ├── dateparse.py              # Parser de fechas robusto (incl. formato español)
 ├── daily_process.py          # Orquestador diario (único punto de entrada)
-├── requirements.txt          # Dependencias (solo openpyxl)
+├── requirements.txt          # Dependencias de producción (openpyxl, Pillow)
+├── requirements-dev.txt      # Dependencias de desarrollo (+ pytest)
+├── assets/                   # logo.png para las hojas de salida (opcional)
+├── tests/                    # pruebas unitarias y de regresión (pytest)
+│   └── data/                 # datos de mercado de prueba (sí se versionan)
+├── .github/workflows/        # CI: corre las pruebas en cada push
 ├── data/                     # (ignorado por git) los 2 adjuntos del correo
 └── salidas/                  # (ignorado por git) resultados generados
 ```
@@ -24,7 +29,7 @@ Solo se ejecuta `daily_process.py`; los otros módulos los usa por dentro.
 ## Requisitos
 
 - Python 3.9 o superior.
-- Única dependencia externa: `openpyxl` (el resto es librería estándar).
+- Dependencias externas: `openpyxl` y `Pillow` (para el logo); el resto es librería estándar.
 
 ## Instalación (entorno virtual)
 
@@ -33,7 +38,8 @@ Desde la carpeta del proyecto:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1        # PowerShell  (CMD: .\.venv\Scripts\activate.bat)
-pip install -r requirements.txt
+pip install -r requirements.txt        # solo produccion
+pip install -r requirements-dev.txt    # produccion + pruebas (pytest)
 ```
 
 ## Uso diario
@@ -77,7 +83,26 @@ Cada día reconstruye la cartera vigente desde `Operaciones Diarias` con la regl
 - Forwards, vols y strikes de la superficie coinciden exactamente.
 - Los payoffs de vencimientos coinciden con el archivo `_vencimientos` de referencia.
 
+## Pruebas
+
+```powershell
+pytest
+```
+
+- **Unitarias** (datos sintéticos): motor de valorización (paridad put-call, signos,
+  interpolación, superficie), fx por calce (1-1, N-1, N-M), clasificación de cartera,
+  fechas y completado de curva. Corren en cualquier máquina.
+- **Regresión de mercado**: contra el grid real del 2026-07-14 (`tests/data/`),
+  con valores esperados validados al centavo contra el maestro Excel.
+- **Regresión de pipeline**: requiere el archivo de cartera del 07-14 en `data/`;
+  se salta automáticamente si no está (no se versiona por confidencialidad).
+
+CI: GitHub Actions (`.github/workflows/tests.yml`) corre la suite en cada push a
+`main` y en cada pull request.
+
 ## Nota de seguridad
 
-`data/` y `salidas/` están en `.gitignore`: los archivos de mercado y cartera
-**no se suben** al repositorio. Usa un repositorio **privado**.
+`data/` y `salidas/` están en `.gitignore`: los archivos de trabajo diario y los
+resultados **no se suben** al repositorio. Los archivos de **cartera** (contrapartes,
+posiciones) son confidenciales y nunca deben versionarse; los datos de **mercado**
+no son sensibles y hay copias de prueba en `tests/data/`. Usa un repositorio **privado**.
