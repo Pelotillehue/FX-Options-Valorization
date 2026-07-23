@@ -86,28 +86,49 @@ class MarketData:
     vol_tenor_dias: list
     vol_smile: list     # lista de (v10P, v25P, vATM, v25C, v10C) en %
 
+    # Curvas separadas (opcionales): la CLP puede tener nodos mas largos (20Y)
+    # que la USD (5Y). Si no se entregan, se usan raw_dias/raw_clp/raw_usd.
+    clp_dias: list = None
+    clp_rates: list = None
+    usd_dias: list = None
+    usd_rates: list = None
+
+    avisos: list = None      # avisos de calidad de datos detectados al cargar
+
     surface: "VolSurface" = None
 
     def build(self):
         self.surface = VolSurface.from_market(self)
         return self
 
+    def _curva_clp(self):
+        if self.clp_dias:
+            return self.clp_dias, self.clp_rates
+        return self.raw_dias, self.raw_clp
+
+    def _curva_usd(self):
+        if self.usd_dias:
+            return self.usd_dias, self.usd_rates
+        return self.raw_dias, self.raw_usd
+
     def rate_clp_std(self, dias):
-        return lin_interpol(self.raw_dias, self.raw_clp, dias)
+        xs, ys = self._curva_clp()
+        return lin_interpol(xs, ys, dias)
 
     def rate_usd_std(self, dias):
-        return lin_interpol(self.raw_dias, self.raw_usd, dias)
+        xs, ys = self._curva_usd()
+        return lin_interpol(xs, ys, dias)
 
     def forward_at(self, fecha_venc):
         dias = dias_vencimiento(self.fecha_proceso, fecha_venc)
-        r_clp = lin_interpol(self.raw_dias, self.raw_clp, dias)
-        r_usd = lin_interpol(self.raw_dias, self.raw_usd, dias)
+        r_clp = self.rate_clp_std(dias)
+        r_usd = self.rate_usd_std(dias)
         df_clp = 1.0 / (1.0 + (r_clp / 100.0) * dias / 360.0)
         df_usd = 1.0 / (1.0 + (r_usd / 100.0) * dias / 360.0)
         return self.spot * df_usd / df_clp
 
     def df_clp_at(self, dias):
-        r = lin_interpol(self.raw_dias, self.raw_clp, dias)
+        r = self.rate_clp_std(dias)
         return 1.0 / (1.0 + (r / 100.0) * dias / 360.0)
 
 

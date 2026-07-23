@@ -21,6 +21,9 @@ salidas/*
 *.xlsm
 *.csv
 
+# Resúmenes del proceso diario (donde sea que se generen)
+resumen_*.txt
+
 # Excepción: datos de mercado de prueba (no sensibles) sí se versionan
 !tests/data/*.xlsx
 
